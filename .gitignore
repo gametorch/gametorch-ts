@@ -5,6 +5,9 @@ coverage/
 *.tsbuildinfo
 pnpm-debug.log*
 
+# Packed artifacts
+*.tgz
+
 # Environment / secrets
 .env
 .env.*

@@ -27,6 +27,9 @@
     "animations",
     "api"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/gametorch/gametorch-ts.git"
