@@ -1,0 +1,49 @@
+{
+  "name": "gametorch",
+  "version": "0.1.0",
+  "description": "Official TypeScript SDK for the GameTorch API: generate game-ready sprites, sound effects and animations.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "keywords": [
+    "gametorch",
+    "gamedev",
+    "sprites",
+    "animations",
+    "api"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gametorch/gametorch-ts.git"
+  },
+  "homepage": "https://gametorch.app",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "oxlint --deny-warnings .",
+    "test": "node --test --test-concurrency=1 \"test/*.test.ts\"",
+    "test:live": "node --test --test-concurrency=1 \"test/live/*.test.ts\"",
+    "audit": "pnpm audit --audit-level=high",
+    "prepack": "pnpm build"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.4",
+    "oxlint": "1.86.0",
+    "typescript": "5.9.3"
+  }
+}
