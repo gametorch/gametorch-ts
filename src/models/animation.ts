@@ -99,6 +99,7 @@ export interface AnimationRun {
   credits_consumed: Decimal;
   reserved_credits: Decimal;
   assets_delivered: number;
+  /** The sprite asset this run was animated from (`undefined` when generated from scratch). */
   base_asset_id?: string;
   error?: string;
   created_at: Timestamp;

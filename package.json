@@ -1,6 +1,6 @@
 {
   "name": "gametorch",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Official TypeScript SDK for the GameTorch API: generate game-ready sprites, sound effects and animations.",
   "license": "MIT",
   "type": "module",

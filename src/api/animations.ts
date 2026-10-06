@@ -26,9 +26,20 @@ import { listQuery } from "./common.ts";
 
 declare module "../client.ts" {
   interface Client {
-    /** Estimates the credit cost of an animation run without starting one. */
+    /**
+     * Estimates the credit cost of an animation run without starting one.
+     *
+     * Pass a sprite's `base_asset_id` (see {@link Client.listSpriteAssets}) to
+     * price animating that sprite, or omit it to price a from-scratch run.
+     */
     estimateAnimation(projectId: string): AnimationEstimateBuilder;
-    /** Starts building an animation run. */
+    /**
+     * Starts building an animation run.
+     *
+     * To animate an existing sprite, pass its asset id from
+     * {@link Client.listSpriteAssets} / `GET /projects/{id}/sprite-assets` as
+     * `base_asset_id`; omit it to generate an animation from scratch.
+     */
     generateAnimation(projectId: string): AnimationRunBuilder;
     /** Lists a project's animation runs. */
     listAnimationRuns(projectId: string, params?: ListParams): Promise<AnimationsResponse>;
@@ -214,7 +225,7 @@ export class AnimationEstimateBuilder {
     return this;
   }
 
-  /** Bases the estimate on an existing asset. */
+  /** Bases the estimate on an existing sprite asset (its `Asset.id`). */
   baseAssetId(baseAssetId: string): this {
     this.#baseAssetId = baseAssetId;
     return this;
@@ -279,7 +290,11 @@ export class AnimationRunBuilder {
     return this;
   }
 
-  /** Animates an existing asset. */
+  /**
+   * Animates an existing sprite by its sprite asset id (`Asset.id`, as
+   * returned by {@link Client.listSpriteAssets}). Omit to generate from
+   * scratch.
+   */
   baseAssetId(baseAssetId: string): this {
     this.#baseAssetId = baseAssetId;
     return this;

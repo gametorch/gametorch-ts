@@ -190,7 +190,7 @@ export class ListParams {
     return this;
   }
 
-  /** Filters animation runs by their base sprite asset. */
+  /** Filters animation runs by their base sprite asset id. */
   baseAssetId(baseAssetId: string): this {
     this.base_asset_id = baseAssetId;
     return this;

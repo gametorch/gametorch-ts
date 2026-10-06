@@ -167,11 +167,52 @@ const page = await client.listGenerations(
 console.log(page.generations, page.next_cursor, page.total);
 ```
 
-## Filtering animations by base image
+## Animating an existing sprite (`base_asset_id`)
 
-Animation runs link back to the sprite asset they were generated from via
-`base_asset_id` (`undefined` when generated from scratch). You can filter
-animation queries by it:
+`base_asset_id` is a **sprite asset UUID** — the `id` of an `Asset` returned by
+`listSpriteAssets` (or `GET /projects/{id}/sprite-assets`), not a generation id.
+To animate an existing sprite, pass that id to `baseAssetId(...)`; omit it to
+generate an animation from scratch. The estimate endpoint accepts it too:
+
+```ts
+import { Client, SpriteMode } from "gametorch";
+
+const client = Client.fromEnv();
+
+// Generate a sprite...
+const models = await client.spriteModels();
+const job = await client
+  .generateSprite(projectId)
+  .prompt("a friendly red fox, side view, game sprite")
+  .mode(SpriteMode.Single)
+  .imageModel(models.image_models[0]!.id)
+  .send();
+
+// ...then read the sprite asset id back from the project's sprite assets.
+const { assets } = await client.listSpriteAssets(projectId);
+const spriteId = assets[0]!.id;
+
+// Price it first, then animate that exact sprite.
+await client
+  .estimateAnimation(projectId)
+  .animationModel("ash")
+  .duration(4)
+  .baseAssetId(spriteId)
+  .send();
+
+const run = await client
+  .generateAnimation(projectId)
+  .prompt("the fox turns its head and flicks its tail")
+  .animationModel("ash")
+  .duration(4)
+  .baseAssetId(spriteId) // omit to generate from scratch
+  .send();
+
+console.log(run.id);
+```
+
+The finished run echoes the link in `base_asset_id`, which also lets you filter
+animation queries by the sprite they came from:
 
 ```ts
 import { ListParams } from "gametorch";
@@ -180,18 +221,21 @@ const runs = await client.listAnimationRuns(
   projectId,
   ListParams.new().baseAssetId(spriteId),
 );
-for (const run of runs.animations) {
-  console.log(run.id, run.base_asset_id);
+for (const animation of runs.animations) {
+  console.log(animation.id, animation.base_asset_id);
 }
 
 // The stream helper honors the same filters.
-for await (const run of client.streamAnimationRuns(
+for await (const animation of client.streamAnimationRuns(
   projectId,
   ListParams.new().baseAssetId(spriteId),
 )) {
-  console.log(run.id);
+  console.log(animation.id);
 }
 ```
+
+See [`examples/animate-sprite.ts`](examples/animate-sprite.ts) for the full
+generate-sprite-then-animate-it flow.
 
 ## Money
 
@@ -276,6 +320,7 @@ node examples/list-projects.ts
 node examples/generate-sprite.ts      # spends credits
 node examples/generate-sound.ts       # spends credits
 node examples/generate-animation.ts   # spends credits
+node examples/animate-sprite.ts       # spends credits; animates a generated sprite
 node examples/export-animation.ts     # read-only; exports every format
 node examples/create-admin-key.ts     # needs an admin key
 node examples/create-project-keys.ts  # needs an admin key
