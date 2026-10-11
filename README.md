@@ -262,6 +262,40 @@ const generation = await client.getGeneration(generationId, false);
 console.log(`created by ${generation.provenance.user_id} via ${generation.provenance.source}`);
 ```
 
+## Metadata
+
+`putAssetMetadata`, `putSoundAssetMetadata` and `putSavedAnimationMetadata` all
+share the same semantics. The request body is
+`{ metadata?, remove?, remove_keys? }` (OpenAPI `PutMetadataRequest` /
+`PutSoundMetadataRequest` / `PutSavedAnimationMetadataRequest`):
+
+- **Metadata merges (upserts).** The keys you send are added or overwritten;
+  keys you omit are kept. A call never clears metadata.
+- **`remove` deletes keys** and is the only way to remove them. `remove_keys`
+  is an accepted alias and is merged with `remove`.
+- The response's `metadata` is the **full merged map** after the change.
+
+```ts
+import { Client } from "gametorch";
+
+const client = Client.fromEnv();
+
+// Merge: `filepath` is added and `variant` is set.
+await client.putAssetMetadata(assetId, { filepath: "output/fox.png", variant: "idle" });
+
+// Merge again: `variant` is overwritten, `filepath` is kept.
+const merged = await client.putSoundAssetMetadata(soundId, { variant: "run" });
+console.log(merged.metadata); // { filepath: "...", variant: "run" }
+
+// Remove: pass a key list, or `{ remove }` / `{ remove_keys }`.
+const removed = await client.putSavedAnimationMetadata(savedId, undefined, ["variant"]);
+console.log(removed.metadata);
+```
+
+Constraints (unchanged): keys are 1–1024 chars, values are 0–1024 char strings,
+and at most 10 pairs per call; `remove` also takes at most 10 keys. Invalid
+input returns `400` (bad keys/limits) or `422` (non-string value / bad body).
+
 ## Error handling
 
 Every fallible operation rejects with a `GametorchError`. `ApiError` exposes the

@@ -82,7 +82,17 @@ try {
   console.log(`saved animation ${saved.id} (frames ${saved.start_frame}-${saved.end_frame})`);
 
   await client.renameSavedAnimation(saved.id, "Sword Raise (named)");
+
+  // Metadata merges (upserts): omitted keys are kept, matching keys are
+  // overwritten. `remove` (alias `remove_keys`) is the only way to delete keys,
+  // and the response returns the full merged map.
   await client.putSavedAnimationMetadata(saved.id, { filepath: "/foo/bar/raise.aseprite" });
+  const tagged = await client.putSavedAnimationMetadata(saved.id, { variant: "attack" });
+  console.log(`metadata: ${JSON.stringify(tagged.metadata)}`);
+  const untagged = await client.putSavedAnimationMetadata(saved.id, undefined, {
+    remove_keys: ["variant"],
+  });
+  console.log(`metadata: ${JSON.stringify(untagged.metadata)}`);
   const label = await client.createLabel(project.id, `anim-${Date.now()}`, "#8bc34a");
   await client.associateSavedAnimationLabel(saved.id, label.name);
 

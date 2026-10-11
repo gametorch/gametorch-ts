@@ -260,8 +260,16 @@ test("saved animation lifecycle on an existing run", async () => {
   const metadata = { filepath: "/tmp/hero.aseprite" };
   const tagged = await c.putSavedAnimationMetadata(saved.id, metadata);
   assert.equal(tagged.metadata["filepath"], metadata.filepath);
-  const cleared = await c.putSavedAnimationMetadata(saved.id, {});
-  assert.deepEqual(cleared.metadata, {});
+
+  // Metadata merges: a second call adds `variant` and keeps `filepath`.
+  const merged = await c.putSavedAnimationMetadata(saved.id, { variant: "attack" });
+  assert.equal(merged.metadata["filepath"], metadata.filepath);
+  assert.equal(merged.metadata["variant"], "attack");
+
+  // `remove` is the only way to delete keys; the response is the full map.
+  const pruned = await c.putSavedAnimationMetadata(saved.id, undefined, { remove: ["variant"] });
+  assert.equal(pruned.metadata["variant"], undefined);
+  assert.equal(pruned.metadata["filepath"], metadata.filepath);
 
   const label = await c.createLabel(target.projectId, shortName("sdk-saved-label"));
   const associated = await c.associateSavedAnimationLabel(saved.id, label.name);

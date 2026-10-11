@@ -19,12 +19,13 @@ import {
   type Download,
   type JobCreated,
   ListParams,
+  type MetadataRemovals,
   decodeArchiveResponse,
   decodeAssetMetadataResponse,
   decodeAssetNameResponse,
   decodeJobCreated,
 } from "../types.ts";
-import { compactQuery, listQuery } from "./common.ts";
+import { compactQuery, listQuery, metadataBody } from "./common.ts";
 
 declare module "../client.ts" {
   interface Client {
@@ -44,10 +45,16 @@ declare module "../client.ts" {
     soundAssetContent(assetId: string): Promise<Download>;
     /** Renames a sound asset. Pass `null` to clear the name. */
     renameSoundAsset(assetId: string, name: string | null): Promise<AssetNameResponse>;
-    /** Replaces a sound asset's metadata. */
+    /**
+     * Merges (upserts) a sound asset's metadata. Keys you send are added or
+     * overwritten and omitted keys are kept. Pass `remove` (a list of keys, or
+     * `{ remove }` / `{ remove_keys }`) to delete keys; it is the only way to
+     * remove them.
+     */
     putSoundAssetMetadata(
       assetId: string,
-      metadata: Record<string, string>,
+      metadata?: Record<string, string>,
+      remove?: MetadataRemovals,
     ): Promise<AssetMetadataResponse>;
     /** Archives a sound asset. */
     archiveSoundAsset(assetId: string): Promise<ArchiveResponse>;
@@ -137,13 +144,18 @@ Client.prototype.renameSoundAsset = function (
 Client.prototype.putSoundAssetMetadata = function (
   this: Client,
   assetId: string,
-  metadata: Record<string, string>,
+  metadata?: Record<string, string>,
+  remove?: MetadataRemovals,
 ): Promise<AssetMetadataResponse> {
   return this.sendJson(
     "writes",
     "PUT /sound-assets/{id}/metadata",
     Concurrency.NONE,
-    { method: "PUT", path: `sound-assets/${assetId}/metadata`, json: { metadata } },
+    {
+      method: "PUT",
+      path: `sound-assets/${assetId}/metadata`,
+      json: metadataBody(metadata, remove),
+    },
     decodeAssetMetadataResponse,
   );
 };

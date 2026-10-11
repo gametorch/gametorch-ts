@@ -65,9 +65,10 @@ export function decodeAssetNameResponse(raw: unknown): AssetNameResponse {
   };
 }
 
-/** Response returned by metadata endpoints. */
+/** Response returned by the metadata endpoints. */
 export interface AssetMetadataResponse {
   ok: boolean;
+  /** The full metadata map after the change (merged, not just the request). */
   metadata: Record<string, string>;
 }
 
@@ -78,6 +79,43 @@ export function decodeAssetMetadataResponse(raw: unknown): AssetMetadataResponse
     metadata: asStringMap(record["metadata"], "AssetMetadataResponse.metadata"),
   };
 }
+
+/**
+ * Keys to delete from an asset's metadata. Either a plain list of keys, or an
+ * object that also accepts the `remove_keys` wire alias.
+ */
+export type MetadataRemovals =
+  | readonly string[]
+  | {
+      /** Keys to delete (max 10). */
+      remove?: readonly string[];
+      /** Alias for `remove`; merged with it. */
+      remove_keys?: readonly string[];
+    };
+
+/**
+ * Request body for the `PUT .../metadata` endpoints (OpenAPI
+ * `PutMetadataRequest` / `PutSoundMetadataRequest` /
+ * `PutSavedAnimationMetadataRequest`).
+ *
+ * Metadata is merged (upserted): the keys you send are added or overwritten and
+ * any key you omit is kept. Passing `metadata` never clears anything; `remove`
+ * is the only way to delete keys.
+ */
+export interface PutMetadataRequest {
+  /** Keys to add or overwrite (keys 1–1024 chars, string values 0–1024 chars, max 10 pairs). */
+  metadata?: Record<string, string>;
+  /** Keys to delete (max 10). */
+  remove?: readonly string[];
+  /** Alias for {@link PutMetadataRequest.remove}; merged with it. */
+  remove_keys?: readonly string[];
+}
+
+/** OpenAPI schema alias for {@link PutMetadataRequest}. */
+export type PutSoundMetadataRequest = PutMetadataRequest;
+
+/** OpenAPI schema alias for {@link PutMetadataRequest}. */
+export type PutSavedAnimationMetadataRequest = PutMetadataRequest;
 
 /**
  * A job-creation envelope returned by generation and frame-generation endpoints

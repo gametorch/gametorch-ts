@@ -23,13 +23,14 @@ import {
   type Download,
   type JobCreated,
   ListParams,
+  type MetadataRemovals,
   type SpriteMode,
   decodeArchiveResponse,
   decodeAssetMetadataResponse,
   decodeAssetNameResponse,
   decodeJobCreated,
 } from "../types.ts";
-import { compactQuery, listQuery } from "./common.ts";
+import { compactQuery, listQuery, metadataBody } from "./common.ts";
 
 declare module "../client.ts" {
   interface Client {
@@ -49,10 +50,16 @@ declare module "../client.ts" {
     assetOriginal(assetId: string): Promise<Download>;
     /** Renames a sprite asset. Pass `null` to clear the name. */
     renameAsset(assetId: string, name: string | null): Promise<AssetNameResponse>;
-    /** Replaces a sprite asset's metadata. */
+    /**
+     * Merges (upserts) a sprite asset's metadata. Keys you send are added or
+     * overwritten and omitted keys are kept. Pass `remove` (a list of keys, or
+     * `{ remove }` / `{ remove_keys }`) to delete keys; it is the only way to
+     * remove them.
+     */
     putAssetMetadata(
       assetId: string,
-      metadata: Record<string, string>,
+      metadata?: Record<string, string>,
+      remove?: MetadataRemovals,
     ): Promise<AssetMetadataResponse>;
     /** Archives a sprite asset. */
     archiveAsset(assetId: string): Promise<ArchiveResponse>;
@@ -169,13 +176,14 @@ Client.prototype.renameAsset = function (
 Client.prototype.putAssetMetadata = function (
   this: Client,
   assetId: string,
-  metadata: Record<string, string>,
+  metadata?: Record<string, string>,
+  remove?: MetadataRemovals,
 ): Promise<AssetMetadataResponse> {
   return this.sendJson(
     "writes",
     "PUT /assets/{id}/metadata",
     Concurrency.NONE,
-    { method: "PUT", path: `assets/${assetId}/metadata`, json: { metadata } },
+    { method: "PUT", path: `assets/${assetId}/metadata`, json: metadataBody(metadata, remove) },
     decodeAssetMetadataResponse,
   );
 };

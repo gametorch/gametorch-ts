@@ -112,9 +112,16 @@ test("sprite generation full flow", async () => {
   const metadata = { filepath: SPRITE_FILEPATH };
   const updated = await c.putAssetMetadata(asset.id, metadata);
   assert.equal(updated.metadata["filepath"], SPRITE_FILEPATH);
-  const cleared = await c.putAssetMetadata(asset.id, {});
-  assert.deepEqual(cleared.metadata, {});
-  await c.putAssetMetadata(asset.id, metadata);
+
+  // Metadata merges: a second call adds `variant` and keeps `filepath`.
+  const merged = await c.putAssetMetadata(asset.id, { variant: "idle" });
+  assert.equal(merged.metadata["filepath"], SPRITE_FILEPATH);
+  assert.equal(merged.metadata["variant"], "idle");
+
+  // `remove` is the only way to delete keys; the response is the full map.
+  const pruned = await c.putAssetMetadata(asset.id, undefined, ["variant"]);
+  assert.equal(pruned.metadata["variant"], undefined);
+  assert.equal(pruned.metadata["filepath"], SPRITE_FILEPATH);
 
   const label = await c.createLabel(project.id, shortName("sprite"));
   const associated = await c.associateAssetLabel(asset.id, label.name);
@@ -163,9 +170,16 @@ test("sound generation full flow", async () => {
   const metadata = { filepath: SOUND_FILEPATH };
   const updated = await c.putSoundAssetMetadata(asset.id, metadata);
   assert.equal(updated.metadata["filepath"], SOUND_FILEPATH);
-  const cleared = await c.putSoundAssetMetadata(asset.id, {});
-  assert.deepEqual(cleared.metadata, {});
-  await c.putSoundAssetMetadata(asset.id, metadata);
+
+  // Metadata merges: a second call adds `variant` and keeps `filepath`.
+  const merged = await c.putSoundAssetMetadata(asset.id, { variant: "swing" });
+  assert.equal(merged.metadata["filepath"], SOUND_FILEPATH);
+  assert.equal(merged.metadata["variant"], "swing");
+
+  // `remove` is the only way to delete keys; the response is the full map.
+  const pruned = await c.putSoundAssetMetadata(asset.id, undefined, ["variant"]);
+  assert.equal(pruned.metadata["variant"], undefined);
+  assert.equal(pruned.metadata["filepath"], SOUND_FILEPATH);
 
   const label = await c.createLabel(project.id, shortName("sound"));
   const associated = await c.associateSoundLabel(asset.id, label.name);
@@ -230,9 +244,16 @@ test("animation generation, exports and saved animation", async () => {
   const metadata = { filepath: ANIMATION_FILEPATH };
   const tagged = await c.putSavedAnimationMetadata(saved.id, metadata);
   assert.equal(tagged.metadata["filepath"], ANIMATION_FILEPATH);
-  const cleared = await c.putSavedAnimationMetadata(saved.id, {});
-  assert.deepEqual(cleared.metadata, {});
-  await c.putSavedAnimationMetadata(saved.id, metadata);
+
+  // Metadata merges: a second call adds `variant` and keeps `filepath`.
+  const merged = await c.putSavedAnimationMetadata(saved.id, { variant: "attack" });
+  assert.equal(merged.metadata["filepath"], ANIMATION_FILEPATH);
+  assert.equal(merged.metadata["variant"], "attack");
+
+  // `remove` is the only way to delete keys; the response is the full map.
+  const pruned = await c.putSavedAnimationMetadata(saved.id, undefined, ["variant"]);
+  assert.equal(pruned.metadata["variant"], undefined);
+  assert.equal(pruned.metadata["filepath"], ANIMATION_FILEPATH);
 
   const label = await c.createLabel(project.id, shortName("anim"));
   const associated = await c.associateSavedAnimationLabel(saved.id, label.name);

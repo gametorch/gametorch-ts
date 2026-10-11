@@ -227,3 +227,47 @@ test("generation builder sends request_id and mode", async () => {
   assert.equal(body["image_model"], "m");
   assert.match(String(body["request_id"]), /^[0-9a-f-]{36}$/);
 });
+
+test("metadata PUT merges (upserts) and returns the full map", async () => {
+  const { fetch, calls } = mockFetch([
+    () => json({ ok: true, metadata: { filepath: "a.png", variant: "idle" } }),
+  ]);
+  const c = client(fetch);
+  const response = await c.putAssetMetadata("asset-1", { variant: "idle" });
+
+  assert.equal(calls[0]?.init.method, "PUT");
+  assert.equal(
+    new URL(String(calls[0]?.url)).pathname,
+    "/api/assets/asset-1/metadata",
+  );
+  assert.deepEqual(JSON.parse(String(calls[0]?.init.body)), {
+    metadata: { variant: "idle" },
+  });
+  assert.deepEqual(response.metadata, { filepath: "a.png", variant: "idle" });
+});
+
+test("metadata PUT serializes remove keys and the remove_keys alias", async () => {
+  const { fetch, calls } = mockFetch([() => json({ ok: true, metadata: {} })]);
+  const c = client(fetch);
+
+  await c.putAssetMetadata("a", undefined, ["x", "y"]);
+  assert.deepEqual(JSON.parse(String(calls[0]?.init.body)), { remove: ["x", "y"] });
+
+  await c.putSoundAssetMetadata("s", { k: "v" }, { remove: ["x"] });
+  assert.deepEqual(JSON.parse(String(calls[1]?.init.body)), {
+    metadata: { k: "v" },
+    remove: ["x"],
+  });
+
+  await c.putSavedAnimationMetadata("sa", { k: "v" }, { remove_keys: ["x"] });
+  assert.deepEqual(JSON.parse(String(calls[2]?.init.body)), {
+    metadata: { k: "v" },
+    remove: ["x"],
+  });
+
+  await c.putAssetMetadata("a", { k: "v" }, { remove: ["x"], remove_keys: ["y"] });
+  assert.deepEqual(JSON.parse(String(calls[3]?.init.body)), {
+    metadata: { k: "v" },
+    remove: ["x", "y"],
+  });
+});

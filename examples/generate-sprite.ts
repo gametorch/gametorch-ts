@@ -41,6 +41,21 @@ try {
     await mkdir("output", { recursive: true });
     await writeFile(`output/${asset.id}.png`, content.bytes());
     console.log(`wrote output/${asset.id}.png (${content.len()} bytes)`);
+
+    // Metadata merges (upserts): this adds two keys without clearing anything.
+    const tagged = await client.putAssetMetadata(asset.id, {
+      filepath: "output/asset.png",
+      variant: "idle",
+    });
+    console.log(`metadata: ${JSON.stringify(tagged.metadata)}`);
+
+    // A second merge adds/overwrites keys and keeps the rest...
+    const merged = await client.putAssetMetadata(asset.id, { variant: "run" });
+    console.log(`metadata: ${JSON.stringify(merged.metadata)}`);
+
+    // ...and `remove` is the only way to delete keys.
+    const untagged = await client.putAssetMetadata(asset.id, undefined, ["variant"]);
+    console.log(`metadata: ${JSON.stringify(untagged.metadata)}`);
   }
 } finally {
   await client.deleteProject(project.slug);

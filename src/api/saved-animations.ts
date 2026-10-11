@@ -15,11 +15,12 @@ import {
   type AssetMetadataResponse,
   type AssetNameResponse,
   ListParams,
+  type MetadataRemovals,
   decodeArchiveResponse,
   decodeAssetMetadataResponse,
   decodeAssetNameResponse,
 } from "../types.ts";
-import { listQuery } from "./common.ts";
+import { listQuery, metadataBody } from "./common.ts";
 
 declare module "../client.ts" {
   interface Client {
@@ -34,10 +35,16 @@ declare module "../client.ts" {
     getSavedAnimation(id: string): Promise<SavedAnimation>;
     /** Renames a saved animation. Pass `null` to clear the name. */
     renameSavedAnimation(id: string, name: string | null): Promise<AssetNameResponse>;
-    /** Replaces a saved animation's metadata. */
+    /**
+     * Merges (upserts) a saved animation's metadata. Keys you send are added or
+     * overwritten and omitted keys are kept. Pass `remove` (a list of keys, or
+     * `{ remove }` / `{ remove_keys }`) to delete keys; it is the only way to
+     * remove them.
+     */
     putSavedAnimationMetadata(
       id: string,
-      metadata: Record<string, string>,
+      metadata?: Record<string, string>,
+      remove?: MetadataRemovals,
     ): Promise<AssetMetadataResponse>;
     /** Archives a saved animation. */
     archiveSavedAnimation(id: string): Promise<ArchiveResponse>;
@@ -108,13 +115,18 @@ Client.prototype.renameSavedAnimation = function (
 Client.prototype.putSavedAnimationMetadata = function (
   this: Client,
   id: string,
-  metadata: Record<string, string>,
+  metadata?: Record<string, string>,
+  remove?: MetadataRemovals,
 ): Promise<AssetMetadataResponse> {
   return this.sendJson(
     "writes",
     "PUT /saved-animations/{id}/metadata",
     Concurrency.NONE,
-    { method: "PUT", path: `saved-animations/${id}/metadata`, json: { metadata } },
+    {
+      method: "PUT",
+      path: `saved-animations/${id}/metadata`,
+      json: metadataBody(metadata, remove),
+    },
     decodeAssetMetadataResponse,
   );
 };
